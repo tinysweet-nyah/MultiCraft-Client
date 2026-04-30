@@ -2,8 +2,6 @@ name: Build MultiCraft Windows
 
 on:
 workflow_dispatch:
-push:
-branches: [ main, master ]
 
 jobs:
 build:
@@ -20,25 +18,34 @@ steps:
   - name: Setup CMake
     uses: lukka/get-cmake@latest
 
-  - name: Install vcpkg deps
+  - name: Clone vcpkg
+    run: git clone https://github.com/microsoft/vcpkg $env:USERPROFILE\vcpkg
+    shell: powershell
+
+  - name: Bootstrap vcpkg
+    run: $env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat
+    shell: powershell
+
+  - name: Install dependencies
     run: |
-      git clone https://github.com/microsoft/vcpkg C:\vcpkg
-      C:\vcpkg\bootstrap-vcpkg.bat
-      C:\vcpkg\vcpkg install zlib sqlite3 curl freetype harfbuzz cairo libpng zstd sdl3 --triplet x64-windows
+      $env:USERPROFILE\vcpkg\vcpkg install zlib sqlite3 curl freetype harfbuzz cairo libpng zstd sdl3 --triplet x64-windows
+    shell: powershell
 
   - name: Configure
-    run: |
-      cmake -S . -B build ^
-      -G "Visual Studio 17 2022" ^
-      -A x64 ^
-      -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ^
-      -DVCPKG_TARGET_TRIPLET=x64-windows ^
-      -DENABLE_SOUND=0 ^
-      -DENABLE_GETTEXT=0 ^
+    run: >
+      cmake -S . -B build
+      -G "Visual Studio 17 2022"
+      -A x64
+      -DCMAKE_TOOLCHAIN_FILE=$env:USERPROFILE\vcpkg\scripts\buildsystems\vcpkg.cmake
+      -DVCPKG_TARGET_TRIPLET=x64-windows
+      -DENABLE_SOUND=0
+      -DENABLE_GETTEXT=0
       -DENABLE_CURSES=0
+    shell: powershell
 
   - name: Build
     run: cmake --build build --config Release
+    shell: powershell
 
   - name: Upload Artifact
     uses: actions/upload-artifact@v4
