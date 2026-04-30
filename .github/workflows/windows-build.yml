@@ -1,0 +1,48 @@
+name: Build MultiCraft Windows
+
+on:
+workflow_dispatch:
+push:
+branches: [ main, master ]
+
+jobs:
+build:
+runs-on: windows-latest
+
+```
+steps:
+  - name: Checkout
+    uses: actions/checkout@v4
+
+  - name: Setup MSBuild
+    uses: microsoft/setup-msbuild@v2
+
+  - name: Setup CMake
+    uses: lukka/get-cmake@latest
+
+  - name: Install vcpkg deps
+    run: |
+      git clone https://github.com/microsoft/vcpkg C:\vcpkg
+      C:\vcpkg\bootstrap-vcpkg.bat
+      C:\vcpkg\vcpkg install zlib sqlite3 curl freetype harfbuzz cairo libpng zstd sdl3 --triplet x64-windows
+
+  - name: Configure
+    run: |
+      cmake -S . -B build ^
+      -G "Visual Studio 17 2022" ^
+      -A x64 ^
+      -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ^
+      -DVCPKG_TARGET_TRIPLET=x64-windows ^
+      -DENABLE_SOUND=0 ^
+      -DENABLE_GETTEXT=0 ^
+      -DENABLE_CURSES=0
+
+  - name: Build
+    run: cmake --build build --config Release
+
+  - name: Upload Artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: multicraft-windows
+      path: build
+```
