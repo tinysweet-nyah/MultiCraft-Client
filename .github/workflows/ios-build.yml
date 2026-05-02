@@ -17,36 +17,29 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install dependencies
+    - name: Build iOS with Xcode
       run: |
-        brew install cmake ninja
-
-    - name: Configure with CMake
-      run: |
-        mkdir -p build
-        cd build
-        cmake .. \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_TOOLCHAIN_FILE=../cmake/ios.toolchain.cmake \
-          -DCMAKE_OSX_ARCHITECTURES=arm64 \
-          -DBUILD_CLIENT=1 \
-          -DENABLE_FREETYPE=1 \
-          -G Ninja
-
-    - name: Build
-      run: |
-        cd build
-        ninja
+        cd Apple/MultiCraft
+        xcodebuild -project MultiCraft.xcodeproj \
+                   -scheme MultiCraft \
+                   -configuration Release \
+                   -sdk iphoneos \
+                   -derivedDataPath build \
+                   CODE_SIGN_IDENTITY="" \
+                   CODE_SIGNING_REQUIRED=NO \
+                   CODE_SIGNING_ALLOWED=NO \
+                   ONLY_ACTIVE_ARCH=NO \
+                   -destination 'generic/platform=iOS'
 
     - name: Create IPA
       run: |
-        cd build
+        cd Apple/MultiCraft/build/Build/Products/Release-iphoneos
         mkdir -p Payload
-        cp -r MultiCraft.app Payload/ 2>/dev/null || echo "App not found in expected location"
-        if [ -d Payload/MultiCraft.app ]; then
+        if [ -d MultiCraft.app ]; then
+          cp -r MultiCraft.app Payload/
           zip -r MultiCraft.ipa Payload/
         else
-          echo "MultiCraft.app not found - build may have failed"
+          echo "MultiCraft.app not found"
           ls -la
         fi
 
@@ -54,6 +47,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: MultiCraft-iOS
-        path: build/MultiCraft.ipa
+        path: Apple/MultiCraft/build/Build/Products/Release-iphoneos/MultiCraft.ipa
         retention-days: 30
-      if: hashFiles('build/MultiCraft.ipa') != ''
+      if: hashFiles('Apple/MultiCraft/build/Build/Products/Release-iphoneos/MultiCraft.ipa') != ''
