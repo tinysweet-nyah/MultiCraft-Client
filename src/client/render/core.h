@@ -25,6 +25,7 @@ class Camera;
 class Client;
 class Hud;
 class Minimap;
+class ESPRenderer;
 
 class RenderingCore
 {
@@ -47,6 +48,7 @@ protected:
 	Camera *camera;
 	Minimap *mapper;
 	Hud *hud;
+	ESPRenderer *esp_renderer;
 
 	void updateScreenSize();
 	virtual void initTextures() {}
