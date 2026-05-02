@@ -72,6 +72,12 @@ void set_default_settings()
 	settings->setDefault("pause_on_lost_focus", "true");
 	settings->setDefault("enable_register_confirmation", "true");
 
+	// ESP Settings
+	settings->setDefault("enable_esp", "false");
+	settings->setDefault("esp_entities", "true");
+	settings->setDefault("esp_players", "true");
+	settings->setDefault("esp_tracers", "true");
+
 	// Keymap
 	settings->setDefault("remote_port", "30000");
 	settings->setDefault("keymap_forward", "KEY_KEY_W");

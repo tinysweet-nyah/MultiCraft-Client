@@ -19,6 +19,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 */
 
 #include "core.h"
+#include "esp.h"
 #include "client/camera.h"
 #include "client/client.h"
 #include "client/clientmap.h"
@@ -31,7 +32,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud)
 	: device(_device), driver(device->getVideoDriver()), smgr(device->getSceneManager()),
 	guienv(device->getGUIEnvironment()), client(_client), camera(client->getCamera()),
-	mapper(client->getMinimap()), hud(_hud)
+	mapper(client->getMinimap()), hud(_hud), esp_renderer(new ESPRenderer(_client))
 {
 	screensize = driver->getScreenSize();
 	virtual_size = screensize;
@@ -39,6 +40,7 @@ RenderingCore::RenderingCore(IrrlichtDevice *_device, Client *_client, Hud *_hud
 
 RenderingCore::~RenderingCore()
 {
+	delete esp_renderer;
 	clearTextures();
 }
 
@@ -83,6 +85,10 @@ void RenderingCore::draw3D()
 	hud->drawSelectionMesh();
 	if (draw_wield_tool)
 		camera->drawWieldedTool();
+	
+	// Draw ESP
+	if (esp_renderer)
+		esp_renderer->draw();
 }
 
 void RenderingCore::drawHUD()

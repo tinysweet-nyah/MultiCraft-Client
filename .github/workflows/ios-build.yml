@@ -1,0 +1,59 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        brew install cmake ninja
+
+    - name: Configure with CMake
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE=../cmake/ios.toolchain.cmake \
+          -DCMAKE_OSX_ARCHITECTURES=arm64 \
+          -DBUILD_CLIENT=1 \
+          -DENABLE_FREETYPE=1 \
+          -G Ninja
+
+    - name: Build
+      run: |
+        cd build
+        ninja
+
+    - name: Create IPA
+      run: |
+        cd build
+        mkdir -p Payload
+        cp -r MultiCraft.app Payload/ 2>/dev/null || echo "App not found in expected location"
+        if [ -d Payload/MultiCraft.app ]; then
+          zip -r MultiCraft.ipa Payload/
+        else
+          echo "MultiCraft.app not found - build may have failed"
+          ls -la
+        fi
+
+    - name: Upload IPA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MultiCraft-iOS
+        path: build/MultiCraft.ipa
+        retention-days: 30
+      if: hashFiles('build/MultiCraft.ipa') != ''
